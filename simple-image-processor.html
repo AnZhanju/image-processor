@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单图片处理工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #667eea;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .controls {
+            margin-bottom: 30px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .control-group select,
+        .control-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .control-group select:focus,
+        .control-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .quality-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .quality-control input[type="range"] {
+            flex: 1;
+        }
+
+        .quality-value {
+            min-width: 50px;
+            text-align: center;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .image-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .image-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .image-info {
+            padding: 15px;
+        }
+
+        .image-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            word-break: break-all;
+        }
+
+        .image-size {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: white;
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖼️ 图片处理工具</h1>
+            <p>格式转换 | 图片压缩 | 添加水印</p>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="converter">格式转换</div>
+            <div class="tab" data-tab="compressor">图片压缩</div>
+            <div class="tab" data-tab="watermark">添加水印</div>
+        </div>
+
+        <!-- 格式转换 -->
+        <div class="tab-content active" id="converter">
+            <div class="upload-area" id="uploadArea1">
+                <div class="upload-icon">📁</div>
+                <div>点击或拖拽图片到此处</div>
+                <div style="color: #666; font-size: 14px; margin-top: 10px;">支持 JPG, PNG, WebP, GIF 等格式</div>
+                <input type="file" id="fileInput1" class="file-input" multiple accept="image/*">
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label>输出格式：</label>
+                    <select id="formatSelect">
+                        <option value="jpg">JPG</option>
+                        <option value="png">PNG</option>
+                        <option value="webp">WebP</option>
+                        <option value="gif">GIF</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>图片质量：</label>
+                    <div class="quality-control">
+                        <input type="range" id="qualitySlider" min="1" max="100" value="80">
+                        <span class="quality-value" id="qualityValue">80%</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>调整尺寸：</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <input type="number" id="widthInput" placeholder="宽度 (像素)">
+                        <input type="number" id="heightInput" placeholder="高度 (像素)">
+                    </div>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button class="btn btn-primary" id="convertBtn" disabled>开始转换</button>
+                <button class="btn btn-secondary" id="clearBtn1">清空列表</button>
+            </div>
+
+            <div class="preview" id="preview1"></div>
+        </div>
+
+        <!-- 图片压缩 -->
+        <div class="tab-content" id="compressor">
+            <div class="upload-area" id="uploadArea2">
+                <div class="upload-icon">📦</div>
+                <div>点击或拖拽图片到此处进行压缩</div>
+                <div style="color: #666; font-size: 14px; margin-top: 10px;">支持批量压缩</div>
+                <input type="file" id="fileInput2" class="file-input" multiple accept="image/*">
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label>压缩模式：</label>
+                    <select id="compressionMode">
+                        <option value="quality">质量压缩</option>
+                        <option value="size">尺寸压缩</option>
+                        <option value="both">双重压缩</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>目标大小 (KB)：</label>
+                    <input type="number" id="targetSize" placeholder="500" value="500">
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button class="btn btn-primary" id="compressBtn" disabled>开始压缩</button>
+                <button class="btn btn-secondary" id="clearBtn2">清空列表</button>
+            </div>
+
+            <div class="preview" id="preview2"></div>
+        </div>
+
+        <!-- 添加水印 -->
+        <div class="tab-content" id="watermark">
+            <div class="upload-area" id="uploadArea3">
+                <div class="upload-icon">💧</div>
+                <div>点击或拖拽图片到此处添加水印</div>
+                <div style="color: #666; font-size: 14px; margin-top: 10px;">支持文字水印</div>
+                <input type="file" id="fileInput3" class="file-input" multiple accept="image/*">
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label>水印文字：</label>
+                    <input type="text" id="watermarkText" placeholder="输入水印文字">
+                </div>
+
+                <div class="control-group">
+                    <label>水印位置：</label>
+                    <select id="watermarkPosition">
+                        <option value="top-left">左上</option>
+                        <option value="top-right">右上</option>
+                        <option value="bottom-left">左下</option>
+                        <option value="bottom-right">右下</option>
+                        <option value="center">居中</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button class="btn btn-primary" id="watermarkBtn" disabled>添加水印</button>
+                <button class="btn btn-secondary" id="clearBtn3">清空列表</button>
+            </div>
+
+            <div class="preview" id="preview3"></div>
+        </div>
+    </div>
+
+    <script>
+        class SimpleImageProcessor {
+            constructor() {
+                this.images = [];
+                this.init();
+            }
+
+            init() {
+                this.setupTabs();
+                this.setupUploadAreas();
+                this.setupControls();
+                this.setupButtons();
+            }
+
+            setupTabs() {
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        const tabName = e.target.dataset.tab;
+                        this.switchTab(tabName);
+                    });
+                });
+            }
+
+            switchTab(tabName) {
+                document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(tabName).classList.add('active');
+            }
+
+            setupUploadAreas() {
+                const areas = ['uploadArea1', 'uploadArea2', 'uploadArea3'];
+                const inputs = ['fileInput1', 'fileInput2', 'fileInput3'];
+
+                areas.forEach((areaId, index) => {
+                    const area = document.getElementById(areaId);
+                    const input = document.getElementById(inputs[index]);
+
+                    area.addEventListener('click', () => input.click());
+                    input.addEventListener('change', (e) => this.handleFileSelect(e.target.files, index + 1));
+
+                    area.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        area.classList.add('dragover');
+                    });
+
+                    area.addEventListener('dragleave', () => {
+                        area.classList.remove('dragover');
+                    });
+
+                    area.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        area.classList.remove('dragover');
+                        this.handleFileSelect(e.dataTransfer.files, index + 1);
+                    });
+                });
+            }
+
+            setupControls() {
+                const qualitySlider = document.getElementById('qualitySlider');
+                const qualityValue = document.getElementById('qualityValue');
+                
+                qualitySlider.addEventListener('input', (e) => {
+                    qualityValue.textContent = e.target.value + '%';
+                });
+            }
+
+            setupButtons() {
+                document.getElementById('convertBtn').addEventListener('click', () => this.convertImages());
+                document.getElementById('compressBtn').addEventListener('click', () => this.compressImages());
+                document.getElementById('watermarkBtn').addEventListener('click', () => this.addWatermarks());
+                
+                document.getElementById('clearBtn1').addEventListener('click', () => this.clearImages(1));
+                document.getElementById('clearBtn2').addEventListener('click', () => this.clearImages(2));
+                document.getElementById('clearBtn3').addEventListener('click', () => this.clearImages(3));
+            }
+
+            handleFileSelect(files, tabIndex) {
+                Array.from(files).forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        this.addImage(file, tabIndex);
+                    }
+                });
+                this.updateButtons(tabIndex);
+            }
+
+            addImage(file, tabIndex) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imageData = {
+                        file: file,
+                        url: e.target.result,
+                        name: file.name,
+                        size: file.size,
+                        tabIndex: tabIndex
+                    };
+
+                    this.images.push(imageData);
+                    this.displayImage(imageData);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            displayImage(imageData) {
+                const preview = document.getElementById(`preview${imageData.tabIndex}`);
+                
+                const imageItem = document.createElement('div');
+                imageItem.className = 'image-item';
+                imageItem.innerHTML = `
+                    <img src="${imageData.url}" alt="${imageData.name}">
+                    <div class="image-info">
+                        <div class="image-name">${imageData.name}</div>
+                        <div class="image-size">${this.formatFileSize(imageData.size)}</div>
+                    </div>
+                `;
+
+                preview.appendChild(imageItem);
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            updateButtons(tabIndex) {
+                const buttons = ['convertBtn', 'compressBtn', 'watermarkBtn'];
+                const button = document.getElementById(buttons[tabIndex - 1]);
+                const images = this.images.filter(img => img.tabIndex === tabIndex);
+                
+                button.disabled = images.length === 0;
+            }
+
+            clearImages(tabIndex) {
+                const preview = document.getElementById(`preview${tabIndex}`);
+                preview.innerHTML = '';
+                
+                this.images = this.images.filter(img => img.tabIndex !== tabIndex);
+                this.updateButtons(tabIndex);
+            }
+
+            async convertImages() {
+                const images = this.images.filter(img => img.tabIndex === 1);
+                if (images.length === 0) return;
+
+                const format = document.getElementById('formatSelect').value;
+                const quality = document.getElementById('qualitySlider').value / 100;
+                const width = document.getElementById('widthInput').value;
+                const height = document.getElementById('heightInput').value;
+
+                this.showLoading(1);
+
+                for (let i = 0; i < images.length; i++) {
+                    await this.processImage(images[i], {
+                        type: 'convert',
+                        format: format,
+                        quality: quality,
+                        width: width || null,
+                        height: height || null
+                    });
+                }
+
+                this.hideLoading(1);
+                this.downloadResults(images, format);
+            }
+
+            async compressImages() {
+                const images = this.images.filter(img => img.tabIndex === 2);
+                if (images.length === 0) return;
+
+                const mode = document.getElementById('compressionMode').value;
+                const targetSize = document.getElementById('targetSize').value;
+
+                this.showLoading(2);
+
+                for (let i = 0; i < images.length; i++) {
+                    await this.processImage(images[i], {
+                        type: 'compress',
+                        mode: mode,
+                        targetSize: targetSize
+                    });
+                }
+
+                this.hideLoading(2);
+                this.downloadResults(images, 'compressed');
+            }
+
+            async addWatermarks() {
+                const images = this.images.filter(img => img.tabIndex === 3);
+                if (images.length === 0) return;
+
+                const text = document.getElementById('watermarkText').value;
+                const position = document.getElementById('watermarkPosition').value;
+
+                if (!text) {
+                    alert('请输入水印文字');
+                    return;
+                }
+
+                this.showLoading(3);
+
+                for (let i = 0; i < images.length; i++) {
+                    await this.processImage(images[i], {
+                        type: 'watermark',
+                        text: text,
+                        position: position
+                    });
+                }
+
+                this.hideLoading(3);
+                this.downloadResults(images, 'watermarked');
+            }
+
+            async processImage(imageData, options) {
+                return new Promise((resolve) => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const img = new Image();
+
+                    img.onload = () => {
+                        let targetWidth = img.width;
+                        let targetHeight = img.height;
+
+                        if (options.width && options.height) {
+                            targetWidth = parseInt(options.width);
+                            targetHeight = parseInt(options.height);
+                        } else if (options.width) {
+                            const ratio = img.height / img.width;
+                            targetWidth = parseInt(options.width);
+                            targetHeight = targetWidth * ratio;
+                        } else if (options.height) {
+                            const ratio = img.width / img.height;
+                            targetHeight = parseInt(options.height);
+                            targetWidth = targetHeight * ratio;
+                        }
+
+                        canvas.width = targetWidth;
+                        canvas.height = targetHeight;
+
+                        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+                        if (options.type === 'watermark' && options.text) {
+                            this.addTextWatermark(ctx, options.text, options.position, targetWidth, targetHeight);
+                        }
+
+                        let mimeType = 'image/jpeg';
+                        if (options.format === 'png') mimeType = 'image/png';
+                        else if (options.format === 'webp') mimeType = 'image/webp';
+                        else if (options.format === 'gif') mimeType = 'image/gif';
+
+                        canvas.toBlob((blob) => {
+                            const url = URL.createObjectURL(blob);
+                            imageData.processedUrl = url;
+                            imageData.processedBlob = blob;
+                            resolve();
+                        }, mimeType, options.quality || 0.8);
+                    };
+
+                    img.src = imageData.url;
+                });
+            }
+
+            addTextWatermark(ctx, text, position, width, height) {
+                ctx.font = '24px Arial';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.lineWidth = 2;
+
+                const textWidth = ctx.measureText(text).width;
+                let x, y;
+
+                switch (position) {
+                    case 'top-left':
+                        x = 20;
+                        y = 30;
+                        break;
+                    case 'top-right':
+                        x = width - textWidth - 20;
+                        y = 30;
+                        break;
+                    case 'bottom-left':
+                        x = 20;
+                        y = height - 20;
+                        break;
+                    case 'bottom-right':
+                        x = width - textWidth - 20;
+                        y = height - 20;
+                        break;
+                    case 'center':
+                        x = (width - textWidth) / 2;
+                        y = height / 2;
+                        break;
+                }
+
+                ctx.strokeText(text, x, y);
+                ctx.fillText(text, x, y);
+            }
+
+            downloadResults(images, suffix) {
+                images.forEach((image) => {
+                    if (image.processedBlob) {
+                        const link = document.createElement('a');
+                        link.href = image.processedUrl;
+                        link.download = `${image.name.replace(/\.[^/.]+$/, '')}_${suffix}.${this.getFileExtension(image.processedBlob.type)}`;
+                        link.click();
+                    }
+                });
+            }
+
+            getFileExtension(mimeType) {
+                const extensions = {
+                    'image/jpeg': 'jpg',
+                    'image/png': 'png',
+                    'image/webp': 'webp',
+                    'image/gif': 'gif'
+                };
+                return extensions[mimeType] || 'jpg';
+            }
+
+            showLoading(tabIndex) {
+                const tabContent = document.getElementById(['converter', 'compressor', 'watermark'][tabIndex - 1]);
+                const loading = document.createElement('div');
+                loading.className = 'loading';
+                loading.innerHTML = `
+                    <div class="spinner"></div>
+                    <div>处理中...</div>
+                `;
+                loading.id = 'loading';
+                tabContent.appendChild(loading);
+            }
+
+            hideLoading(tabIndex) {
+                const loading = document.getElementById('loading');
+                if (loading) {
+                    loading.remove();
+                }
+            }
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            new SimpleImageProcessor();
+        });
+    </script>
+</body>
+</html> 
