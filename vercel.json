@@ -1,0 +1,9 @@
+{
+  "build": {
+    "outputDirectory": "webp2jpg-online-master"
+  },
+  "rewrites": [{
+    "source": "/(.*)",
+    "destination": "/index.html"
+  }]
+}
